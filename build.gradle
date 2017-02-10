@@ -1,12 +1,16 @@
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.1.0-beta-17'
+    ext.kotlin_version = '1.1.0-beta-38'
 
     repositories {
         mavenCentral()
+        jcenter()
         maven {
             url { 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
+        }
+        maven {
+            url "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
@@ -17,10 +21,12 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-sourceCompatibility = 1.5
+sourceCompatibility = 1.8
+ext.junitJupiterVersion  = '5.0.0-M3'
 
 repositories {
     mavenCentral()
+    jcenter()
     maven {
         url { 'http://dl.bintray.com/kotlin/kotlin-eap-1.1' }
     }
@@ -28,5 +34,30 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile 'org.jetbrains.kotlinx:kotlinx-support-jdk8:0.3'
+    compile 'org.openjdk.jmh:jmh-core:1.17.4'
+//    kapt 'org.openjdk.jmh:jmh-generator-annprocess:1.17.4'
+
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
 }
+
+
+
+//<includePluginDependencies>true</includePluginDependencies>
+//                            <mainClass>org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator</mainClass>
+//<arguments>
+//<argument>${project.basedir}/target/classes/</argument>
+//                                <argument>${project.basedir}/target/generated-sources/jmh/</argument>
+//                                <argument>${project.basedir}/target/classes/</argument>
+//                                <argument>${jmh.generator}</argument>
+//</arguments>
+//                        </configuration>
+//</execution>
+//                </executions>
+//<dependencies>
+//<dependency>
+//<groupId>org.openjdk.jmh</groupId>
+//                        <artifactId>jmh-generator-bytecode</artifactId>
+//<version>${jmh.version}</version>
+//                    </dependency>
