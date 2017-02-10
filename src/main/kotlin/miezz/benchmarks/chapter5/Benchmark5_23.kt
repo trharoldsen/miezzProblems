@@ -11,44 +11,46 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Fork(1)
-open class Problem5_23Benchmarks {
+open class Benchmarks5_23Kt {
+	private val INPUT_SIZE = 400
+
 	@Param("linear", "parabolic", "sinusoidal", "tangent")
 	lateinit var benchmarkSuite: String
 
-	lateinit var random: Random
-	lateinit var benchmarkGen: Iterator<Equation>
-	lateinit var input: Pair<(Double) -> Double, LowHighPair>
+	lateinit var inputs: List<Pair<(Double) -> Double, LowHighPair>>
 
 	@Setup(Level.Iteration)
 	fun setupIteration() {
-		random = Random(0xDEAD_BEEF_FED_DAD)
-		benchmarkGen = byName[benchmarkSuite]!!(random)
-	}
-
-	@Setup(Level.Invocation)
-	fun setupInvocation() {
-		val benchmark = benchmarkGen.next()
-		input = Pair(benchmark.make(), benchmark.lowHighPair(random))
+		val random = Random(0xDEAD_BEEF_FED_DAD)
+		val builder = byName[benchmarkSuite]!!(random)
+		inputs = builder.asSequence()
+			.map { Pair(it.make(), it.lowHighPair(random)) }
+			.take(INPUT_SIZE)
+			.toList()
 	}
 
 	@Benchmark
-	@Measurement(iterations = 10, batchSize = 50000)
-	@Warmup(iterations = 5, batchSize = 40000)
+	@Measurement(iterations = 10)
+	@Warmup(iterations = 5)
 	fun binarySearchSolver(): Double {
-		val f = input.first
-		val low = input.second.low
-		val high = input.second.high
-		return BinarySearchZeroSolver(0.000001).findZero(f, low, high)
+		return inputs.map {
+			val f = it.first
+			val low = it.second.low
+			val high = it.second.high
+			BinarySearchZeroSolver(0.00000001).findZero(f, low, high)
+		}.average()
 	}
 
 	@Benchmark
-	@Measurement(iterations = 10, batchSize = 50000)
-	@Warmup(iterations = 5, batchSize = 40000)
+	@Measurement(iterations = 10)
+	@Warmup(iterations = 5)
 	fun linearEquationSolve(): Double {
-		val f = input.first
-		val low = input.second.low
-		val high = input.second.high
-		return LinearInterpolationZeroSolver(0.000001).findZero(f, low, high)
+		return inputs.map {
+			val f = it.first
+			val low = it.second.low
+			val high = it.second.high
+			LinearInterpolationZeroSolver(0.00000001).findZero(f, low, high)
+		}.average()
 	}
 
 	companion object {

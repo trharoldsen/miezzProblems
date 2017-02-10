@@ -5,10 +5,10 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-public class Benchmark5_21 extends Benchmark5_21Kt {
+public class Benchmarks5_21 extends Benchmarks5_21Kt {
 	public static void main(String[] args) throws RunnerException {
 		Options opt = new OptionsBuilder()
-			.include(Benchmark5_21.class.getSimpleName())
+			.include(Benchmarks5_21.class.getSimpleName())
 			.forks(1)
 			.build();
 		new Runner(opt).run();

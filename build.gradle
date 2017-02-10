@@ -36,7 +36,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-support-jdk8:0.3'
     compile 'org.openjdk.jmh:jmh-core:1.17.4'
-//    kapt 'org.openjdk.jmh:jmh-generator-annprocess:1.17.4'
+    compile 'org.openjdk.jmh:jmh-generator-annprocess:1.17.4'
 
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")

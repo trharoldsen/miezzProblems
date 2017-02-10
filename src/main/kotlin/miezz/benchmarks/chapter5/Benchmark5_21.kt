@@ -6,7 +6,7 @@ import miezz.chapter5.RandomizedTestFactory
 import org.openjdk.jmh.annotations.*
 
 @State(Scope.Thread)
-open class Benchmark5_21Kt {
+open class Benchmarks5_21Kt {
 	@Param("usuallyLow", "usuallyHigh", "passNearEnd", "passNearMid",
 		"regressNearEnd", "regressNearMid", "spread")
 	lateinit var benchmarkSuite: String
