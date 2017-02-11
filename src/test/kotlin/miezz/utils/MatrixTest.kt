@@ -1,12 +1,9 @@
 package miezz.utils
 
 import kotlinx.support.jdk8.streams.asStream
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assumptions.assumingThat
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.function.Executable
 
 private val indexInit: (Index) -> Index = { it }
@@ -583,5 +580,97 @@ interface MutableMatrixTests : MatrixTests {
 				.map { Executable { assertTrue(submatrix[it + UP + LEFT] == it + UP) } }
 				.asStream()
 		)
+	}
+}
+
+@DisplayName("Tests on matrixOf methods")
+class MatrixOfTests {
+	@Nested
+	@DisplayName("On calling matrixOf()")
+	class EmptyMatrixTests {
+		val matrix = matrixOf<Int>()
+
+		@Test
+		@DisplayName("returns a size zero matrix")
+		fun testForSizeZero() {
+			assertEquals(Size(0, 0), matrix.size)
+		}
+
+		@Test
+		@DisplayName("calling get on matrix throw an IOB exception")
+		fun testGetThrowsException() {
+			assertThrows<IOB>(IOB::class.java, { matrix[0, 0] } )
+		}
+	}
+
+	@Nested
+	@DisplayName("Given an empty Array to make a matrix")
+	class EmptyArrayMatrix {
+		val matrix = matrixOf(*arrayOf<List<Int>>())
+
+		@Test
+		@DisplayName("returns a size zero matrix")
+		fun testForSizeZero() {
+			assertEquals(Size(0, 0), matrix.size)
+		}
+
+		@Test
+		@DisplayName("calling get on matrix throw an IOB exception")
+		fun testGetThrowsException() {
+			assertThrows<IOB>(IOB::class.java, { matrix[0, 0] } )
+		}
+	}
+
+	@Nested
+	@DisplayName("Given an Array with empty lists to make a matrix")
+	class EmptyColumnArrayMatrix {
+		val matrix = matrixOf<Int>(listOf(), listOf())
+
+		@Test
+		@DisplayName("returns a size zero matrix")
+		fun testForSizeZero() {
+			assertEquals(Size(0, 2), matrix.size)
+		}
+
+		@Test
+		@DisplayName("calling get on matrix throw an IOB exception")
+		fun testGetThrowsException() {
+			assertThrows<IOB>(IOB::class.java, { matrix[0, 0] } )
+		}
+	}
+
+	@Nested
+	@DisplayName("On making a matrix with correctly formatted rows")
+	class CorrectMatrixOfTest {
+		val matrix = matrixOf(listOf(1, 2, 3), listOf(4, 5, 6))
+
+		@Test
+		@DisplayName("Test size")
+		fun testSize() {
+			assertEquals(Size(2, 3), matrix.size)
+		}
+
+		@Test
+		@DisplayName("Test initializtion")
+		fun testValues() {
+			assertAll(
+				Executable { assertEquals(1, matrix[0, 0]) },
+				Executable { assertEquals(2, matrix[0, 1]) },
+				Executable { assertEquals(3, matrix[0, 2]) },
+				Executable { assertEquals(4, matrix[1, 0]) },
+				Executable { assertEquals(5, matrix[1, 1]) },
+				Executable { assertEquals(6, matrix[1, 2]) }
+			)
+		}
+	}
+
+	@Nested
+	@DisplayName("On making a matrix with rows of mismatched lengths")
+	class MismatchedMatrixofTest {
+		@Test
+		@DisplayName("It should throw an IOB exception")
+		fun testMake() {
+			assertThrows<IOB>(IOB::class.java) { matrixOf(listOf(1, 2), listOf(3)) }
+		}
 	}
 }

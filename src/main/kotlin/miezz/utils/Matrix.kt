@@ -2,8 +2,6 @@ package miezz.utils
 
 /** Constant for Index(0, 0) */
 val ZERO_INDEX = Index(0, 0)
-/** Constant for Offset(0, 0) */
-val ZERO_OFFSET = Offset(0, 0)
 /** Constant offset for moving up one row */
 val UP = Offset(-1, 0)
 /** Constant offset for moving down one row */
@@ -92,6 +90,9 @@ operator fun Int.times(offset: Offset) = offset * this
  * @property bottomRight the bottom right index (exclusive) of this rectangle
  */
 data class Rectangle(val topLeft: Index, val bottomRight: Index) {
+	constructor(top: Int, left: Int, bottom: Int, right: Int) :
+		this(Index(top, left), Index(bottom, right))
+
 	init {
 		if (top > bottom)
 			throw IllegalArgumentException("top ($top) greater than bottom ($bottom)")
@@ -108,22 +109,18 @@ data class Rectangle(val topLeft: Index, val bottomRight: Index) {
 		return Size(rows, columns)
 	}
 
-	/**
-	 * Shorthand for [topLeft]`.column`
-	 */
+	/** Shorthand for [topLeft]`.column` */
 	val left: Int get() = topLeft.column
-	/**
-	 * Shorthand for [bottomRight]`.column`
-	 */
+	/** Shorthand for [bottomRight]`.column` */
 	val right: Int get() = bottomRight.column
-	/**
-	 * Shorthand for [topLeft]`.row`
-	 */
+	/** Shorthand for [topLeft]`.row` */
 	val top: Int get() = topLeft.row
-	/**
-	 * Shorthand for [bottomRight]`.row`
-	 */
+	/** Shorthand for [bottomRight]`.row` */
 	val bottom: Int get() = bottomRight.row
+	/** Top right corner of this matrix */
+	val topRight: Index get() = Index(top, right)
+	/** Bottom left corner of this matrix */
+	val bottomLeft: Index get() = Index(bottom, left)
 
 	/**
 	 * Returns true if [index] exists inside this rectangle
@@ -346,7 +343,7 @@ private fun unflattenIndex(flat: Int, dimensions: Size): Index {
 
 private fun flattenIndex(index: Index, dimensions: Size): Int {
 	return index.row * dimensions.columns + index.column
-}
+} 
 
 /**
  * A [Matrix] implemented as a flattened array structure.
@@ -375,5 +372,26 @@ class ArrayMatrix<T>(
 	override operator fun set(index: Index, value: T) {
 		rangeCheck(index, size)
 		array[flattenIndex(index, size)] = value
+	}
+}
+
+fun <T> matrixOf(): Matrix<T> {
+	return object : Matrix<T> {
+		override val rectangle: Rectangle
+			get() = Rectangle(ZERO_INDEX, ZERO_INDEX)
+
+		override fun get(index: Index): T {
+			throw IndexOutOfBoundsException("$index")
+		}
+	}
+}
+
+fun <T> matrixOf(vararg rows: List<T>): Matrix<T> {
+	if (rows.isEmpty())
+		return matrixOf()
+	val size = Size(rows.size, rows[0].size)
+	return ArrayMatrix(size) {
+		val row = rows[it.row]
+		row[it.column]
 	}
 }
