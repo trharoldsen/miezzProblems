@@ -51,6 +51,7 @@ data class Index(val row: Int, val column: Int) {
 	operator fun minus(other: Index): Offset {
 		return Offset(row - other.row, column - other.column)
 	}
+
 	override fun toString() = "[$row, $column]"
 }
 
@@ -143,12 +144,16 @@ interface Matrix<out T>: Iterable<T> {
 	val size: Size get() = rectangle.size
 
 	/**
-	 * The rectangle structure of this matrix.  For a matrix, this is equivalent to
-	 * `Rectangle(Index(0, 0), Index(matrix.size.rows-1, matrix.size.columns-1))`.  For
-	 * submatrices, the indices are relative to the top-most parent matrix.
-	 *
+	 * The rectangle structure of this matrix.  This is equivalent to
+	 * `Rectangle(Index(0, 0), Index(matrix.size.rows, matrix.size.columns))`.
 	 */
 	val rectangle: Rectangle
+
+	/**
+	 * The rectangle defining the bounds of a submatrix.  For a top level matrix, this
+	 * is equivalent to [rectangle].
+	 */
+	val absoluteRectangle: Rectangle
 
 	/**
 	 * Returns the element at [index].
@@ -273,8 +278,13 @@ private class BaseMutableMatrixIterator<T>(
 private open class SubMatrix<out T>(
 	open val parent: Matrix<T>,
 	protected val extendBounds: Boolean,
-	override val rectangle: Rectangle
+	bounds: Rectangle
 ) : Matrix<T> {
+	val offset = bounds.topLeft
+	override val rectangle: Rectangle = bounds.size.asRectangle()
+	override val absoluteRectangle: Rectangle
+		get() = Rectangle(offset, offset + (rectangle.bottomRight - ZERO_INDEX) )
+
 	override val size get() = rectangle.size
 
 	override fun get(index: Index): T {
@@ -284,7 +294,7 @@ private open class SubMatrix<out T>(
 	}
 
 	protected fun adjustIndex(index: Index): Index =
-		rectangle.topLeft + (index - ZERO_INDEX)
+		offset + (index - ZERO_INDEX)
 
 	override fun submatrix(rectangle: Rectangle, extendBounds: Boolean): Matrix<T> {
 		submatrixRectangleCheck(rectangle, size)
@@ -343,7 +353,7 @@ private fun unflattenIndex(flat: Int, dimensions: Size): Index {
 
 private fun flattenIndex(index: Index, dimensions: Size): Int {
 	return index.row * dimensions.columns + index.column
-} 
+}
 
 /**
  * A [Matrix] implemented as a flattened array structure.
@@ -363,6 +373,9 @@ class ArrayMatrix<T>(
 			return Rectangle(topLeft, bottomRight)
 		}
 
+	override val absoluteRectangle: Rectangle
+		get() = rectangle
+
 	override operator fun get(index: Index): T {
 		rangeCheck(index, size)
 		@Suppress("UNCHECKED_CAST")
@@ -379,6 +392,9 @@ fun <T> matrixOf(): Matrix<T> {
 	return object : Matrix<T> {
 		override val rectangle: Rectangle
 			get() = Rectangle(ZERO_INDEX, ZERO_INDEX)
+
+		override val absoluteRectangle: Rectangle
+			get() = rectangle
 
 		override fun get(index: Index): T {
 			throw IndexOutOfBoundsException("$index")

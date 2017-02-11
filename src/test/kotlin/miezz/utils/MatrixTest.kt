@@ -88,12 +88,20 @@ interface MatrixTests {
 		)
 	}
 
-	@DisplayName("Rectangle indices of submatrix should be relative to parent")
+	@DisplayName("absoluteRectangle indices of submatrix should be relative to parent")
+	@Test
+	fun submatrix_absoluteRectangleIndices() {
+		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
+		assertEquals(Rectangle(Index(1, 1), Index(3, 4)), submatrix.absoluteRectangle)
+	}
+
+	@DisplayName("rectangle indices of submatrix should be relative to submatrix")
 	@Test
 	fun submatrix_rectangleIndices() {
 		val matrix = makeMatrix(Size(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
-		assertEquals(Rectangle(Index(1, 1), Index(3, 4)), submatrix.rectangle)
+		assertEquals(Rectangle(Index(0, 0), Index(2, 3)), submatrix.rectangle)
 	}
 
 	@DisplayName("Test size field of submatrix")
@@ -219,13 +227,22 @@ interface MatrixTests {
 		)
 	}
 
-	@DisplayName("Rectangle indices of submatrix should be relative to topmost parent")
+	@DisplayName("absoluteRectangle indices of subsubmatrix should be relative to topmost parent")
+	@Test
+	fun subsubmatrix_absoluteRectangleIndices() {
+		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
+		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 3)))
+		assertEquals(Rectangle(Index(2, 2), Index(3, 4)), subsubmatrix.absoluteRectangle)
+	}
+
+	@DisplayName("rectangle indices of subsubmatrix should be relative to subsubmatrix")
 	@Test
 	fun subsubmatrix_rectangleIndices() {
 		val matrix = makeMatrix(Size(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 3)))
-		assertEquals(Rectangle(Index(2, 2), Index(3, 4)), subsubmatrix.rectangle)
+		assertEquals(Rectangle(Index(0, 0), Index(1, 2)), subsubmatrix.rectangle)
 	}
 
 	@DisplayName("Test size field of subsubmatrix")
@@ -629,7 +646,7 @@ class MatrixOfTests {
 		@Test
 		@DisplayName("returns a size zero matrix")
 		fun testForSizeZero() {
-			assertEquals(Size(0, 2), matrix.size)
+			assertEquals(Size(2, 0), matrix.size)
 		}
 
 		@Test
