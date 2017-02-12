@@ -11,15 +11,15 @@ import java.util.*
 import kotlin.properties.Delegates
 
 
-class BinarySearchSolverTests : Prob5_23Test() {
+class BinarySearchSolverTests : Prob5_23Tests() {
 	override fun makeSolver(error: Double) = BinarySearchZeroSolver(error)
 }
 
-class LinearInterpolationSolverTests : Prob5_23Test() {
+class LinearInterpolationSolverTests : Prob5_23Tests() {
 	override fun makeSolver(error: Double) = LinearInterpolationZeroSolver(error)
 }
 
-abstract class Prob5_23Test {
+abstract class Prob5_23Tests {
 	@TestFactory
 	fun linearTest(): List<DynamicTest> {
 		val random = Random(0xBAD_DAD_FAD)

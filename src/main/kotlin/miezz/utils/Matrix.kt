@@ -127,8 +127,8 @@ data class Rectangle(val topLeft: Index, val bottomRight: Index) {
 	 * Returns true if [index] exists inside this rectangle
 	 */
 	operator fun contains(index: Index): Boolean {
-		return index.row >= topLeft.row && index.row < bottomRight.row &&
-			index.column >= topLeft.column && index.column < bottomRight.column
+		return index.row in top..(bottom - 1) &&
+			index.column in left..(right - 1)
 	}
 
 	override fun toString() = "Rectangle{$topLeft, $bottomRight}"
@@ -142,6 +142,11 @@ interface Matrix<out T>: Iterable<T> {
 	 * The size of this matrix.
 	 */
 	val size: Size get() = rectangle.size
+
+	/**
+	 * True if this matrix contains no elements
+	 */
+	fun isEmpty() = size.rows == 0 || size.columns == 0
 
 	/**
 	 * The rectangle structure of this matrix.  This is equivalent to

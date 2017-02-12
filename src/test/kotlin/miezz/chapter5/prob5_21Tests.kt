@@ -5,19 +5,19 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 
-class Naive5_21_ImplTests : Tests_problem5_21 {
+class Naive5_21_ImplTests : prob5_21Tests {
 	override val uut: Problem5_21 = Naive5_21()
 }
 
-class NaiveWhile5_21_ImplTests : Tests_problem5_21 {
+class NaiveWhile5_21_ImplTests : prob5_21Tests {
 	override val uut: Problem5_21 = NaiveWhile5_21()
 }
 
-class Jump5_21_ImplTests : Tests_problem5_21 {
+class Jump5_21_ImplTests : prob5_21Tests {
 	override val uut: Problem5_21 = JumpForward5_21()
 }
 
-interface Tests_problem5_21 {
+interface prob5_21Tests {
 	val uut: Problem5_21
 
 	@Test
