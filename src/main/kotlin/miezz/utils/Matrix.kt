@@ -367,6 +367,9 @@ class ArrayMatrix<T>(
 	override val size: Size,
 	init: (Index) -> T
 ) : MutableMatrix<T> {
+	constructor(rows: Int, columns: Int, init: (Index) -> T)
+		: this(Size(rows, columns), init)
+
 	@Suppress("USELESS_CAST")
 	private val array: Array<Any?> =
 		Array(size.numElements) { init(unflattenIndex(it, size)) as T }
