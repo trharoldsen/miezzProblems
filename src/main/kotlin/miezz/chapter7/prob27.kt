@@ -6,7 +6,7 @@ import miezz.util.Stack
 import miezz.utils.ArrayMatrix
 import miezz.utils.Matrix
 import miezz.utils.MutableMatrix
-import miezz.utils.Size
+import miezz.utils.Dimensions
 
 interface Problem7_27 {
 	fun C(N: Int, k: Int): Long
@@ -37,7 +37,7 @@ class Problem7_27Dynamic_v2 : Problem7_27 {
 	data class Subproblem(val N: Int, val k: Int)
 
 	override fun C(N: Int, k: Int): Long {
-		cache = ArrayMatrix(Size(N+1, k+1)) { -1L }
+		cache = ArrayMatrix(Dimensions(N+1, k+1)) { -1L }
 		return C_recurse(Subproblem(N, k))
 	}
 
@@ -64,7 +64,7 @@ class Problem7_27Dynamic_v3 : Problem7_27 {
 	data class Subproblem(val N: Int, val k: Int)
 
 	override fun C(N: Int, k: Int): Long {
-		cache = ArrayMatrix(Size(N+1, k+1)) {
+		cache = ArrayMatrix(Dimensions(N+1, k+1)) {
 			if (it.column == 0 || it.column == it.row) 1L else -1L
 		}
 		return C_recurse(Subproblem(N, k))
@@ -166,7 +166,7 @@ class Problem7_27DynamicUnrolled_v2 : Problem7_27 {
 	}
 
 	override fun C(N: Int, k: Int): Long {
-		cache = ArrayMatrix(Size(N+1, k+1)) { -1L }
+		cache = ArrayMatrix(Dimensions(N+1, k+1)) { -1L }
 		val state = State(N)
 		val (opStack, valueStack) = state
 		opStack.push(Operation(COMPUTE, Subproblem(N, k)))

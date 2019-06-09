@@ -12,22 +12,20 @@ val LEFT = Offset(0, -1)
 val RIGHT = Offset(0, 1)
 
 /**
- * Size of a matrix as defined by the number of rows and columns in the matrix.
- * @property rows number of rows specified by this Size
- * @property columns number of columns specified by this Size
+ * Dimensions (height x width) of a rectangle.
+ * @property height number of rows specified by this Size
+ * @property width number of columns specified by this Size
  */
-data class Size(val rows: Int, val columns: Int) {
+data class Dimensions(val height: Int, val width: Int) {
 	init {
-		if (rows < 0)
-			throw IllegalArgumentException("rows($rows) less than 0")
-		if (columns < 0)
-			throw IllegalArgumentException("columns($columns) less than 0")
+		if (height < 0)
+			throw IllegalArgumentException("height less than 0: $height")
+		if (width < 0)
+			throw IllegalArgumentException("width less than 0: $width")
 	}
 	/** the total number of elements in a matrix of this size */
-	val numElements: Int get() = rows * columns
-	/** Returns a rectangle based at (0,0) with this size */
-	fun asRectangle() = Rectangle(ZERO_INDEX, Index(rows, columns))
-	override fun toString(): String = "Size{$rows rows x $columns columns)}"
+	val numElements: Int get() = height * width
+	override fun toString(): String = "Size{$height rows x $width columns)}"
 }
 
 /**
@@ -39,7 +37,9 @@ data class Index(val row: Int, val column: Int) {
 	/**
 	 * Returns the index of this index shifted by [offset]
 	 */
-	operator fun plus(offset: Offset) : Index {
+	operator fun plus(offset: Offset): Index = shift(offset)
+
+	fun shift(offset: Offset): Index {
 		return Index(row + offset.rows, column + offset.columns)
 	}
 
@@ -48,9 +48,13 @@ data class Index(val row: Int, val column: Int) {
 	 * bottom right of this index, then the returned offset will have positive row
 	 * and column values.
 	 */
-	operator fun minus(other: Index): Offset {
+	operator fun minus(other: Index): Offset = offsetTo(other)
+
+	fun offsetTo(other: Index): Offset {
 		return Offset(row - other.row, column - other.column)
 	}
+
+	fun offsetFrom(other: Index): Offset = other.offsetTo(this)
 
 	override fun toString() = "[$row, $column]"
 }
@@ -74,12 +78,6 @@ data class Offset(val rows: Int, val columns: Int) {
 	operator fun times(value: Int) =
 		Offset(rows * value, columns * value)
 
-	/**
-	 * Returns the offset computed by dividing this offset (both row and column)
-	 * by [value]
-	 * */
-	operator fun div(value: Int) =
-		Offset(rows / value, columns / value)
 	override fun toString() = "Offset($rows, $columns)"
 }
 
@@ -90,24 +88,24 @@ operator fun Int.times(offset: Offset) = offset * this
  * @property topLeft the top left index (inclusive) of this rectangle
  * @property bottomRight the bottom right index (exclusive) of this rectangle
  */
-data class Rectangle(val topLeft: Index, val bottomRight: Index) {
+data class Rectangle(val topLeft: Index, val bottomRight: Index): Iterable<Index> {
 	constructor(top: Int, left: Int, bottom: Int, right: Int) :
 		this(Index(top, left), Index(bottom, right))
+	constructor(topLeft: Index, dimensions: Dimensions):
+		this(topLeft, Index(topLeft.row + dimensions.height, topLeft.column + dimensions.width))
 
 	init {
 		if (top > bottom)
-			throw IllegalArgumentException("top ($top) greater than bottom ($bottom)")
+			throw IllegalArgumentException("Rectange has negative height")
 		if (left > right)
-			throw IllegalArgumentException("left ($left) greater than of right ($right)")
+			throw IllegalArgumentException("Rectangle has negative width")
 	}
 
 	/**
-	 * The size of this rectangle.
+	 * The dimensions of this rectangle.
 	 */
-	val size: Size get() {
-		val rows = bottomRight.row - topLeft.row
-		val columns = bottomRight.column - topLeft.column
-		return Size(rows, columns)
+	val dimensions: Dimensions get() {
+		return Dimensions(height, width)
 	}
 
 	/** Shorthand for [topLeft]`.column` */
@@ -122,6 +120,8 @@ data class Rectangle(val topLeft: Index, val bottomRight: Index) {
 	val topRight: Index get() = Index(top, right)
 	/** Bottom left corner of this matrix */
 	val bottomLeft: Index get() = Index(bottom, left)
+	val height: Int get() = bottom - top
+	val width: Int get() = right - left
 
 	/**
 	 * Returns true if [index] exists inside this rectangle
@@ -130,6 +130,15 @@ data class Rectangle(val topLeft: Index, val bottomRight: Index) {
 		return index.row in top..(bottom - 1) &&
 			index.column in left..(right - 1)
 	}
+
+	override fun iterator(): Iterator<Index> {
+		return (top..bottom-1).asSequence().flatMap { row ->
+			(left..right-1).asSequence().map { col -> Index(row, col) }
+		}.iterator()
+	}
+
+	fun rows(): IntProgression = top..bottom-1
+	fun columns(): IntProgression = left..right-1
 
 	override fun toString() = "Rectangle{$topLeft, $bottomRight}"
 }
@@ -141,29 +150,27 @@ interface Matrix<out T>: Iterable<T> {
 	/**
 	 * The size of this matrix.
 	 */
-	val size: Size get() = rectangle.size
-
-	/**
-	 * True if this matrix contains no elements
-	 */
-	fun isEmpty() = size.rows == 0 || size.columns == 0
-
-	/**
-	 * The rectangle structure of this matrix.  This is equivalent to
-	 * `Rectangle(Index(0, 0), Index(matrix.size.rows, matrix.size.columns))`.
-	 */
-	val rectangle: Rectangle
+	val dimensions: Dimensions get() = rectangle.dimensions
 
 	/**
 	 * The rectangle defining the bounds of a submatrix.  For a top level matrix, this
 	 * is equivalent to [rectangle].
 	 */
-	val absoluteRectangle: Rectangle
+	val rectangle: Rectangle
+
+	/**
+	 * True if this matrix contains no elements
+	 */
+	fun isEmpty() = dimensions.height == 0 || dimensions.width == 0
 
 	/**
 	 * Returns the element at [index].
 	 */
 	operator fun get(index: Index): T
+
+	/**
+	 * Returns the element at index ([row], [column]).
+	 */
 	operator fun get(row: Int, column: Int) = get(Index(row, column))
 
 	/**
@@ -177,12 +184,19 @@ interface Matrix<out T>: Iterable<T> {
 	 *     this matrix
 	 */
 	fun submatrix(rectangle: Rectangle, extendBounds: Boolean=false): Matrix<T> {
-		submatrixRectangleCheck(rectangle, size)
+		submatrixRectangleCheck(rectangle, dimensions)
 		return SubMatrix(this, extendBounds, rectangle)
 	}
 
-	override fun iterator(): MatrixIterator<T> = BaseMatrixIterator(this)
+	override fun iterator(): MatrixIterator<T> = MatrixIteratorImpl(this)
+
+	fun indices(): Rectangle = rectangle
+
+	fun withIndex(): Iterable<MatrixIndexedValue<T>>
+		= indices().map { MatrixIndexedValue(it, this[it]) }
 }
+
+data class MatrixIndexedValue<out T>(val index: Index, val value: T)
 
 /**
  * A 2 dimensional with support for updating elements.  This class does not support
@@ -198,11 +212,11 @@ interface MutableMatrix<T> : Matrix<T>, MutableIterable<T> {
 	}
 
 	override fun submatrix(rectangle: Rectangle, extendBounds: Boolean): MutableMatrix<T>{
-		submatrixRectangleCheck(rectangle, size)
-		return SubMutableMatrix(this, extendBounds, rectangle)
+		submatrixRectangleCheck(rectangle, dimensions)
+		return SubMatrix(this, extendBounds, rectangle)
 	}
 
-	override fun iterator(): MutableMatrixIterator<T> = BaseMutableMatrixIterator(this)
+	override fun iterator(): MutableMatrixIterator<T> = MatrixIteratorImpl(this)
 }
 
 /**
@@ -237,12 +251,12 @@ interface MutableMatrixIterator<T> : MatrixIterator<T>, MutableIterator<T> {
 	}
 }
 
-private open class BaseMatrixIterator<out T>(
-	protected val matrix: Matrix<T>
-) : MatrixIterator<T> {
+private class MatrixIteratorImpl<T>(
+	private val matrix: Matrix<T>
+) : MutableMatrixIterator<T> {
 	private var nextIndex: Index? =
-		if (matrix.size.rows > 0 && matrix.size.columns > 0) ZERO_INDEX else null
-	protected var curIndex: Index? = null
+		if (matrix.dimensions.height > 0 && matrix.dimensions.width > 0) ZERO_INDEX else null
+	private var curIndex: Index? = null
 
 	override fun hasNext(): Boolean = nextIndex != null
 
@@ -258,20 +272,16 @@ private open class BaseMatrixIterator<out T>(
 	override fun nextIndex(): Index? = nextIndex
 
 	/** Increments the index to the next location in the matrix */
-	protected open fun Index.increment(): Index? {
+	private fun Index.increment(): Index? {
 		var next = this + RIGHT
-		if (next.column < matrix.size.columns)
+		if (next.column < matrix.dimensions.width)
 			return next
 		next = Index(this.row + 1, 0)
-		if (next.row < matrix.size.rows)
+		if (next.row < matrix.dimensions.height)
 			return next
 		return null
 	}
-}
 
-private class BaseMutableMatrixIterator<T>(
-	mutableMatrix: MutableMatrix<T>
-) : BaseMatrixIterator<T>(mutableMatrix), MutableMatrixIterator<T> {
 	val mutableMatrix get() = matrix as MutableMatrix<T>
 	override fun set(value: T) {
 		val curIndex = this.curIndex ?:
@@ -280,140 +290,123 @@ private class BaseMutableMatrixIterator<T>(
 	}
 }
 
-private open class SubMatrix<out T>(
-	open val parent: Matrix<T>,
-	protected val extendBounds: Boolean,
+private class SubMatrix<T>(
+	val parent: Matrix<T>,
+	val extendBounds: Boolean,
 	bounds: Rectangle
-) : Matrix<T> {
-	val offset = bounds.topLeft
-	override val rectangle: Rectangle = bounds.size.asRectangle()
-	override val absoluteRectangle: Rectangle
-		get() = Rectangle(offset, offset + (rectangle.bottomRight - ZERO_INDEX) )
+) : MutableMatrix<T> {
+	override val rectangle: Rectangle = bounds
 
-	override val size get() = rectangle.size
+	val mutableParent: MutableMatrix<T>
+		get() = parent as MutableMatrix<T>
+
+	override val dimensions: Dimensions
+		get() = rectangle.dimensions
 
 	override fun get(index: Index): T {
-		if (!extendBounds) rangeCheck(index, size)
+		if (!extendBounds) rangeCheck(index, dimensions)
 		val adjusted = adjustIndex(index)
 		return parent[adjusted]
 	}
 
-	protected fun adjustIndex(index: Index): Index =
-		offset + (index - ZERO_INDEX)
+	private fun adjustIndex(index: Index): Index =
+		rectangle.topLeft + (index - ZERO_INDEX)
 
-	override fun submatrix(rectangle: Rectangle, extendBounds: Boolean): Matrix<T> {
-		submatrixRectangleCheck(rectangle, size)
+	override fun submatrix(rectangle: Rectangle, extendBounds: Boolean): MutableMatrix<T> {
+		submatrixRectangleCheck(rectangle, dimensions)
 		val adjustedTL = adjustIndex(rectangle.topLeft)
 		val adjustedBR = adjustIndex(rectangle.bottomRight)
 		val adjustedRect = Rectangle(adjustedTL, adjustedBR)
 		return SubMatrix(parent, extendBounds, adjustedRect)
 	}
 
-	override fun iterator(): MatrixIterator<T> = BaseMatrixIterator(this)
-}
-
-private open class SubMutableMatrix<T>(
-	override val parent: MutableMatrix<T>,
-	extendBounds: Boolean,
-	rectangle: Rectangle
-) : SubMatrix<T>(parent, extendBounds, rectangle), MutableMatrix<T> {
 	override fun set(index: Index, value: T) {
-		if (!extendBounds) rangeCheck(index, size)
+		if (!extendBounds) rangeCheck(index, dimensions)
 		val adjusted = adjustIndex(index)
-		parent[adjusted] = value
+		mutableParent[adjusted] = value
 	}
 
-	override fun submatrix(rectangle: Rectangle, extendBounds: Boolean): MutableMatrix<T> {
-		submatrixRectangleCheck(rectangle, size)
-		val adjustedTL = adjustIndex(rectangle.topLeft)
-		val adjustedBR = adjustIndex(rectangle.bottomRight)
-		val adjustedRect = Rectangle(adjustedTL, adjustedBR)
-		return SubMutableMatrix(parent, extendBounds, adjustedRect)
-	}
-
-	override fun iterator(): MutableMatrixIterator<T> = BaseMutableMatrixIterator(this)
+	override fun iterator(): MutableMatrixIterator<T> = MatrixIteratorImpl(this)
 }
 
-private fun rangeCheck(index: Index, dimensions: Size) {
-	if (index.row < 0 || index.column < 0 || index.row >= dimensions.rows ||
-		index.column >= dimensions.columns)
+private fun rangeCheck(index: Index, dimensions: Dimensions) {
+	if (index.row < 0 || index.column < 0 || index.row >= dimensions.height ||
+		index.column >= dimensions.width)
 		throw IndexOutOfBoundsException("Index: $index, Size: $dimensions")
 }
 
-private fun submatrixRectangleCheck(rectangle: Rectangle, dimensions: Size) {
+private fun submatrixRectangleCheck(rectangle: Rectangle, dimensions: Dimensions) {
 	val topLeft = rectangle.topLeft
 	if (topLeft.row < 0 || topLeft.column < 0)
 		throw IndexOutOfBoundsException("Index: $topLeft, Size: $dimensions")
 
 	val bottomRight = rectangle.bottomRight
-	if (bottomRight.row > dimensions.rows || bottomRight.column > dimensions.columns)
+	if (bottomRight.row > dimensions.height || bottomRight.column > dimensions.width)
 		throw IndexOutOfBoundsException("Index: $topLeft, Size: $dimensions")
 }
 
-private fun unflattenIndex(flat: Int, dimensions: Size): Index {
-	val row = flat / dimensions.columns
-	val column = flat.rem(dimensions.columns)
+private fun unflattenIndex(flat: Int, dimensions: Dimensions): Index {
+	val row = flat / dimensions.width
+	val column = flat.rem(dimensions.width)
 	return Index(row, column)
 }
 
-private fun flattenIndex(index: Index, dimensions: Size): Int {
-	return index.row * dimensions.columns + index.column
+private fun flattenIndex(index: Index, dimensions: Dimensions): Int {
+	return index.row * dimensions.width + index.column
 }
 
 /**
  * A [Matrix] implemented as a flattened array structure.
  */
 class ArrayMatrix<T>(
-	override val size: Size,
+	override val dimensions: Dimensions,
 	init: (Index) -> T
 ) : MutableMatrix<T> {
 	constructor(rows: Int, columns: Int, init: (Index) -> T)
-		: this(Size(rows, columns), init)
+		: this(Dimensions(rows, columns), init)
 
 	@Suppress("USELESS_CAST")
 	private val array: Array<Any?> =
-		Array(size.numElements) { init(unflattenIndex(it, size)) as T }
+		Array(dimensions.numElements) { init(unflattenIndex(it, dimensions)) as T }
 
 	override val rectangle: Rectangle
-		get() {
-			val topLeft = Index(0, 0)
-			val bottomRight = Index(size.rows, size.columns)
-			return Rectangle(topLeft, bottomRight)
-		}
-
-	override val absoluteRectangle: Rectangle
-		get() = rectangle
+		get() = this.rectangle
 
 	override operator fun get(index: Index): T {
-		rangeCheck(index, size)
+		rangeCheck(index, dimensions)
 		@Suppress("UNCHECKED_CAST")
-		return array[flattenIndex(index, size)] as T
+		return array[flattenIndex(index, dimensions)] as T
 	}
 
 	override operator fun set(index: Index, value: T) {
-		rangeCheck(index, size)
-		array[flattenIndex(index, size)] = value
+		rangeCheck(index, dimensions)
+		array[flattenIndex(index, dimensions)] = value
 	}
 }
 
-fun <T> matrixOf(): Matrix<T> {
-	return object : Matrix<T> {
+fun <T> matrixOf(): Matrix<T> = mutableMatrixOf()
+
+fun <T> matrixOf(vararg rows: List<T>): Matrix<T> = mutableMatrixOf(*rows)
+
+fun <T> mutableMatrixOf(): MutableMatrix<T> {
+	return object : MutableMatrix<T> {
 		override val rectangle: Rectangle
 			get() = Rectangle(ZERO_INDEX, ZERO_INDEX)
 
-		override val absoluteRectangle: Rectangle
-			get() = rectangle
-
 		override fun get(index: Index): T {
+			throw IndexOutOfBoundsException("$index")
+		}
+
+		override fun set(index: Index, value: T) {
 			throw IndexOutOfBoundsException("$index")
 		}
 	}
 }
 
-fun <T> matrixOf(vararg rows: List<T>): Matrix<T> {
+fun <T> mutableMatrixOf(vararg rows: List<T>): MutableMatrix<T> {
 	if (rows.isEmpty())
-		return matrixOf()
-	val size = Size(rows.size, rows[0].size)
+		return mutableMatrixOf()
+	val size = Dimensions(rows.size, rows[0].size)
 	return ArrayMatrix(size) {
 		val row = rows[it.row]
 		row[it.column]

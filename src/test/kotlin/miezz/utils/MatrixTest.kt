@@ -9,29 +9,29 @@ import org.junit.jupiter.api.function.Executable
 private val indexInit: (Index) -> Index = { it }
 
 interface MatrixTests {
-	fun makeMatrix(size: Size, init: (Index) -> Index): Matrix<Index>
+	fun makeMatrix(dimensions: Dimensions, init: (Index) -> Index): Matrix<Index>
 
 	@DisplayName("Zero sized matrices are allowed and preserved")
 	@Test
 	fun testZeroSize() {
 		assertAll(
-			Executable { assertEquals(Size(0, 0), makeMatrix(Size(0, 0), indexInit).size) },
-			Executable { assertEquals(Size(0, 4), makeMatrix(Size(0, 4), indexInit).size) },
-			Executable { assertEquals(Size(4, 0), makeMatrix(Size(4, 0), indexInit).size) }
+			Executable { assertEquals(Dimensions(0, 0), makeMatrix(Dimensions(0, 0), indexInit).dimensions) },
+			Executable { assertEquals(Dimensions(0, 4), makeMatrix(Dimensions(0, 4), indexInit).dimensions) },
+			Executable { assertEquals(Dimensions(4, 0), makeMatrix(Dimensions(4, 0), indexInit).dimensions) }
 		)
 	}
 
-	@DisplayName("Size of matrix is same as provided")
+	@DisplayName("Dimensions of matrix is same as provided")
 	@Test
 	fun testMatrixSize() {
-		val matrix = makeMatrix(Size(2, 3), indexInit)
-		assertEquals(Size(2, 3), matrix.size)
+		val matrix = makeMatrix(Dimensions(2, 3), indexInit)
+		assertEquals(Dimensions(2, 3), matrix.dimensions)
 	}
 
-	@DisplayName("Matrix rectangle indices are (0, 0) x size")
+	@DisplayName("Matrix rectangle indices are (0, 0) x dimensions")
 	@Test
 	fun testMatrixRectangleStart() {
-		val rectangle = makeMatrix(Size(3, 4), indexInit).rectangle
+		val rectangle = makeMatrix(Dimensions(3, 4), indexInit).rectangle
 		assertAll(
 			Executable { assertEquals(ZERO_INDEX, rectangle.topLeft) },
 			Executable { assertEquals(Index(3, 4), rectangle.bottomRight) }
@@ -41,7 +41,7 @@ interface MatrixTests {
 	@DisplayName("get returns expected value")
 	@Test
 	fun testGet() {
-		val matrix = makeMatrix(Size(2, 2), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 2), indexInit)
 		assertAll(
 			Executable { assertEquals(Index(0, 0), matrix[Index(0, 0)]) },
 			Executable { assertEquals(Index(0, 1), matrix[Index(0, 1)]) },
@@ -57,7 +57,7 @@ interface MatrixTests {
 	@DisplayName("Rectangle outside parent matrix causes IOB exception")
 	@Test
 	fun submatrix_invalidRectangleConstruct() {
-		val matrix = makeMatrix(Size(2, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 3), indexInit)
 		val submatrix = { tl: Index, br: Index -> matrix.submatrix(Rectangle(tl, br)) }
 		assertAll(
 			Executable { assertThrows<IOB>(IOB::class.java, { submatrix(Index(-1, 0), Index(2, 3)) }) },
@@ -71,9 +71,9 @@ interface MatrixTests {
 	@DisplayName("Can make a zero bounds submatrix")
 	@Test
 	fun submatrix_zeroBounds() {
-		val matrix = makeMatrix(Size(2, 2), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 2), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(0, 0), Index(0, 0)))
-		assertEquals(Size(0, 0), submatrix.size)
+		assertEquals(Dimensions(0, 0), submatrix.dimensions)
 	}
 
 	@DisplayName("Can submatrix a zero-sized matrix")
@@ -82,40 +82,40 @@ interface MatrixTests {
 		val submatrix = { matrix: Matrix<*> -> matrix.submatrix(Rectangle(ZERO_INDEX, ZERO_INDEX))}
 
 		assertAll(
-			Executable { assertEquals(Size(0, 0), submatrix(makeMatrix(Size(0, 0), indexInit)).size) },
-			Executable { assertEquals(Size(0, 0), submatrix(makeMatrix(Size(0, 2), indexInit)).size) },
-			Executable { assertEquals(Size(0, 0), submatrix(makeMatrix(Size(2, 0), indexInit)).size) }
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeMatrix(Dimensions(0, 0), indexInit)).dimensions) },
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeMatrix(Dimensions(0, 2), indexInit)).dimensions) },
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeMatrix(Dimensions(2, 0), indexInit)).dimensions) }
 		)
 	}
 
-	@DisplayName("absoluteRectangle indices of submatrix should be relative to parent")
+	@DisplayName("rectangle indices of submatrix should be relative to parent")
 	@Test
 	fun submatrix_absoluteRectangleIndices() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
-		assertEquals(Rectangle(Index(1, 1), Index(3, 4)), submatrix.absoluteRectangle)
+		assertEquals(Rectangle(Index(1, 1), Index(3, 4)), submatrix.rectangle)
 	}
 
 	@DisplayName("rectangle indices of submatrix should be relative to submatrix")
 	@Test
 	fun submatrix_rectangleIndices() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		assertEquals(Rectangle(Index(0, 0), Index(2, 3)), submatrix.rectangle)
 	}
 
-	@DisplayName("Test size field of submatrix")
+	@DisplayName("Test dimensions field of submatrix")
 	@Test
 	fun submatrix_testSize() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
-		assertEquals(Size(2, 3), submatrix.size)
+		assertEquals(Dimensions(2, 3), submatrix.dimensions)
 	}
 
 	@DisplayName("Get on submatrix returns expected value")
 	@Test
 	fun submatrix_testGet() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)))
 		assertAll(
 			Executable { assertEquals(Index(1, 1), submatrix[Index(0, 0)]) },
@@ -132,7 +132,7 @@ interface MatrixTests {
 	@DisplayName("Get on submatrix reflects parent matrix")
 	@Test
 	fun submatrix_getReflectsParent() {
-		val matrix = makeMatrix(Size(1, 1), indexInit)
+		val matrix = makeMatrix(Dimensions(1, 1), indexInit)
 		if (matrix is MutableMatrix<Index>) {
 			val submatrix = matrix.submatrix(Rectangle(ZERO_INDEX, Index(1, 1)))
 			matrix[0, 0] = Index(1, 1)
@@ -143,7 +143,7 @@ interface MatrixTests {
 	@DisplayName("When extended bounds is true, submatrix get allows indexing outside submatrix")
 	@Test
 	fun submatrix_getExtendedBounds() {
-		val matrix = makeMatrix(Size(3, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
 			Executable { assertEquals(Index(0, 0), submatrix[-1, -1]) },
@@ -158,7 +158,7 @@ interface MatrixTests {
 	@DisplayName("Get on boundsExtended submatrix cause IOB exception when outside parent")
 	@Test
 	fun submatrix_getExtendedBoundsIllegal() {
-		val matrix = makeMatrix(Size(3, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
 			Executable { assertThrows<IOB>(IOB::class.java, { submatrix[-2, 0] }) },
@@ -171,7 +171,7 @@ interface MatrixTests {
 	@DisplayName("Get on non-BoundsExtended submatrix cause IOB when outside submatrix bounds")
 	@Test
 	fun submatrix_getNonExtendedBoundsIllegalIndex() {
-		val matrix = makeMatrix(Size(3, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), false)
 		assertAll(
 			Executable { assertThrows<IOB>(IOB::class.java, { submatrix[-1, -1] }) },
@@ -186,7 +186,7 @@ interface MatrixTests {
 	@DisplayName("Rectangle outside parent submatrix causes IOB exception")
 	@Test
 	fun subsubmatrix_invalidRectangleConstruct() {
-		val matrix = makeMatrix(Size(4, 5), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 5), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val subsubmatrix = { tl: Index, br: Index -> submatrix.submatrix(Rectangle(tl, br), true) }
 		assertAll(
@@ -201,18 +201,18 @@ interface MatrixTests {
 	@DisplayName("Can make a zero bounds subsubmatrix")
 	@Test
 	fun subsubmatrix_zeroBounds() {
-		val matrix = makeMatrix(Size(2, 2), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 2), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(0, 0), Index(1, 1)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(0, 0), Index(0, 0)))
-		assertEquals(Size(0, 0), subsubmatrix.size)
+		assertEquals(Dimensions(0, 0), subsubmatrix.dimensions)
 	}
 
 	@DisplayName("Can submatrix a zero-sized submatrix")
 	@Test
 	fun subsubmatrix_ofZeroBoundsMatrix() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
-		val makeSubmatrix = {size: Size ->
-			val rectangle = Rectangle(ZERO_INDEX, Index(size.rows, size.columns))
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
+		val makeSubmatrix = { dimensions: Dimensions ->
+			val rectangle = Rectangle(ZERO_INDEX, Index(dimensions.height, dimensions.width))
 			matrix.submatrix(rectangle)
 		}
 		val submatrix = { submatrix: Matrix<*> ->
@@ -221,43 +221,43 @@ interface MatrixTests {
 		}
 
 		assertAll(
-			Executable { assertEquals(Size(0, 0), submatrix(makeSubmatrix(Size(1, 1))).size) },
-			Executable { assertEquals(Size(0, 0), submatrix(makeSubmatrix(Size(0, 2))).size) },
-			Executable { assertEquals(Size(0, 0), submatrix(makeSubmatrix(Size(2, 0))).size) }
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeSubmatrix(Dimensions(1, 1))).dimensions) },
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeSubmatrix(Dimensions(0, 2))).dimensions) },
+			Executable { assertEquals(Dimensions(0, 0), submatrix(makeSubmatrix(Dimensions(2, 0))).dimensions) }
 		)
 	}
 
-	@DisplayName("absoluteRectangle indices of subsubmatrix should be relative to topmost parent")
+	@DisplayName("rectangle indices of subsubmatrix should be relative to topmost parent")
 	@Test
 	fun subsubmatrix_absoluteRectangleIndices() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 3)))
-		assertEquals(Rectangle(Index(2, 2), Index(3, 4)), subsubmatrix.absoluteRectangle)
+		assertEquals(Rectangle(Index(2, 2), Index(3, 4)), subsubmatrix.rectangle)
 	}
 
 	@DisplayName("rectangle indices of subsubmatrix should be relative to subsubmatrix")
 	@Test
 	fun subsubmatrix_rectangleIndices() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 3)))
 		assertEquals(Rectangle(Index(0, 0), Index(1, 2)), subsubmatrix.rectangle)
 	}
 
-	@DisplayName("Test size field of subsubmatrix")
+	@DisplayName("Test dimensions field of subsubmatrix")
 	@Test
 	fun subsubmatrix_testSize() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 3)))
-		assertEquals(Size(1, 2), subsubmatrix.size)
+		assertEquals(Dimensions(1, 2), subsubmatrix.dimensions)
 	}
 
 	@DisplayName("Get on subsubmatrix returns expected value")
 	@Test
 	fun subsubmatrix_testGet() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)))
 		assertAll(
@@ -268,7 +268,7 @@ interface MatrixTests {
 	@DisplayName("Get on subsubmatrix reflects parent matrix")
 	@Test
 	fun subsubmatrix_getReflectsParent() {
-		val matrix = makeMatrix(Size(1, 1), indexInit)
+		val matrix = makeMatrix(Dimensions(1, 1), indexInit)
 		if (matrix is MutableMatrix<Index>) {
 			val submatrix = matrix.submatrix(Rectangle(ZERO_INDEX, Index(1, 1)))
 			val subsubmatrix = submatrix.submatrix(Rectangle(ZERO_INDEX, Index(1, 1)))
@@ -280,7 +280,7 @@ interface MatrixTests {
 	@DisplayName("When extended bounds is true, submatrix get allows indexing to topmost matrix")
 	@Test
 	fun subsubmatrix_getExtendedBounds() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), true)
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
@@ -296,7 +296,7 @@ interface MatrixTests {
 	@DisplayName("Get on boundsExtended submatrix cause IOB exception when outside top most parent")
 	@Test
 	fun subsubmatrix_getExtendedBoundsIllegal() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), true)
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
@@ -310,7 +310,7 @@ interface MatrixTests {
 	@DisplayName("Get on non-BoundsExtended subsubmatrix cause IOB when outside subsubmatrix bounds")
 	@Test
 	fun subsubmatrix_getNonExtendedBoundsIllegalIndex() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), false)
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), false)
 		assertAll(
@@ -327,7 +327,7 @@ interface MatrixTests {
 	@DisplayName("Iterator iterates over all elements once")
 	@Test
 	fun iteratorTest() {
-		val matrix = makeMatrix(Size(2, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 3), indexInit)
 		val values = ArrayList<Index>()
 		val it = matrix.iterator()
 		while (it.hasNext()) {
@@ -345,7 +345,7 @@ interface MatrixTests {
 	@DisplayName("Values match expected value at indices for iterator")
 	@Test
 	fun iteratorIndicesTest() {
-		val matrix = makeMatrix(Size(2, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 3), indexInit)
 		val values = ArrayList<Index>()
 		val indices = ArrayList<Index>()
 		val it = matrix.iterator()
@@ -359,10 +359,10 @@ interface MatrixTests {
 	@DisplayName("Iterator.nextIndex is null after iterator is exhausted")
 	@Test
 	fun iteratorIndexNullTest() {
-		val matrix1 = makeMatrix(Size(0, 0), indexInit)
-		val matrix2 = makeMatrix(Size(0, 1), indexInit)
-		val matrix3 = makeMatrix(Size(1, 0), indexInit)
-		val matrix4 = makeMatrix(Size(1, 1), indexInit)
+		val matrix1 = makeMatrix(Dimensions(0, 0), indexInit)
+		val matrix2 = makeMatrix(Dimensions(0, 1), indexInit)
+		val matrix3 = makeMatrix(Dimensions(1, 0), indexInit)
+		val matrix4 = makeMatrix(Dimensions(1, 1), indexInit)
 
 		assertAll(
 			Executable { assertNull(matrix1.iterator().nextIndex()) },
@@ -379,7 +379,7 @@ interface MatrixTests {
 	@DisplayName("Submatrix iterator iterates over all elements once")
 	@Test
 	fun submatrix_iteratorTest() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val values = ArrayList<Index>()
 		val it = submatrix.iterator()
@@ -398,7 +398,7 @@ interface MatrixTests {
 	@DisplayName("Submatrix values match expected value at indices for iterator")
 	@Test
 	fun submatrix_iteratorIndicesTest() {
-		val matrix = makeMatrix(Size(4, 5), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 5), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val values = ArrayList<Index>()
 		val indices = ArrayList<Index>()
@@ -416,7 +416,7 @@ interface MatrixTests {
 }
 
 interface MutableMatrixTests : MatrixTests {
-	override fun makeMatrix(size: Size, init: (Index) -> Index): MutableMatrix<Index>
+	override fun makeMatrix(dimensions: Dimensions, init: (Index) -> Index): MutableMatrix<Index>
 
 	// set tests
 	@DisplayName("Test set")
@@ -430,7 +430,7 @@ interface MutableMatrixTests : MatrixTests {
 	fun submatrix_testSet() {
 		val indices = listOf(Index(0, 0), Index(0, 1), Index(1, 0), Index(1, 1))
 		indices.map { DynamicTest.dynamicTest("submatrix[$it]") {
-			val matrix = makeMatrix(Size(3, 4), indexInit)
+			val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 			val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)))
 			submatrix[it] = Index(-1, -1)
 			assertEquals(Index(-1, -1), submatrix[it])
@@ -440,7 +440,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on submatrix is reflected parent matrix")
 	@Test
 	fun submatrix_setReflectsParent() {
-		val matrix = makeMatrix(Size(2, 2), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 2), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)))
 		submatrix[0, 0] = Index(-1, -1)
 		assertEquals(Index(-1, -1), matrix[1, 1])
@@ -453,7 +453,7 @@ interface MutableMatrixTests : MatrixTests {
 			Index(1, 1), Index(1, 0), Index(0, 1))
 		return indices.map { DynamicTest.dynamicTest("submatrix[$it]") {
 			val index = it
-			val matrix = makeMatrix(Size(3, 3), indexInit)
+			val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 			val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 			assumingThat(index + UP + LEFT == submatrix[index]) {
 				submatrix[index] = Index(-1, -1)
@@ -465,7 +465,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on boundsExtended submatrix cause IOB exception when outside parent")
 	@Test
 	fun submatrix_setExtendedBoundsIllegal() {
-		val matrix = makeMatrix(Size(3, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
 			Executable { assertThrows<IOB>(IOB::class.java, { submatrix[-2, 0] = Index(0, 0) }) },
@@ -478,7 +478,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on non-BoundsExtended submatrix cause IOB when outside submatrix bounds")
 	@Test
 	fun submatrix_setNonExtendedBoundsIllegalIndex() {
-		val matrix = makeMatrix(Size(3, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 3), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), false)
 		assertAll(
 			Executable { assertThrows<IOB>(IOB::class.java, { submatrix[-1, -1] = Index(0, 0) }) },
@@ -493,7 +493,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on subsubmatrix returns expected value")
 	@Test
 	fun subsubmatrix_testSet() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)))
 		subsubmatrix[0, 0] = Index(-1, -1)
@@ -503,7 +503,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on subsubmatrix reflects parent matrix")
 	@Test
 	fun subsubmatrix_setReflectsParent() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)))
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)))
 		subsubmatrix[0, 0] = Index(-1, -1)
@@ -517,7 +517,7 @@ interface MutableMatrixTests : MatrixTests {
 			Index(1, 1), Index(1, 0), Index(0, 1))
 		return indices.map { DynamicTest.dynamicTest("submatrix[$it]") {
 			val index = it
-			val matrix = makeMatrix(Size(4, 4), indexInit)
+			val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 			val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), true)
 			val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 			assumingThat(index + UP + LEFT == subsubmatrix[index]) {
@@ -534,7 +534,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on boundsExtended submatrix cause IOB exception when outside top most parent")
 	@Test
 	fun subsubmatrix_setExtendedBoundsIllegal() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), true)
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), true)
 		assertAll(
@@ -548,7 +548,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Set on non-BoundsExtended subsubmatrix cause IOB when outside subsubmatrix bounds")
 	@Test
 	fun subsubmatrix_setNonExtendedBoundsIllegalIndex() {
-		val matrix = makeMatrix(Size(4, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(4, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 3)), false)
 		val subsubmatrix = submatrix.submatrix(Rectangle(Index(1, 1), Index(2, 2)), false)
 		assertAll(
@@ -565,7 +565,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Matrix iterator set updates values")
 	@Test
 	fun matrix_iteratorSetTest() {
-		val matrix = makeMatrix(Size(2, 3), indexInit)
+		val matrix = makeMatrix(Dimensions(2, 3), indexInit)
 		val it = matrix.iterator()
 		while (it.hasNext()) {
 			val value = it.next()
@@ -583,7 +583,7 @@ interface MutableMatrixTests : MatrixTests {
 	@DisplayName("Submatrix iterator set updates values")
 	@Test
 	fun submatrix_iteratorSetTest() {
-		val matrix = makeMatrix(Size(3, 4), indexInit)
+		val matrix = makeMatrix(Dimensions(3, 4), indexInit)
 		val submatrix = matrix.submatrix(Rectangle(Index(1, 1), Index(3, 4)))
 		val it = submatrix.iterator()
 		while (it.hasNext()) {
@@ -608,9 +608,9 @@ class MatrixOfTests {
 		val matrix = matrixOf<Int>()
 
 		@Test
-		@DisplayName("returns a size zero matrix")
+		@DisplayName("returns a dimensions zero matrix")
 		fun testForSizeZero() {
-			assertEquals(Size(0, 0), matrix.size)
+			assertEquals(Dimensions(0, 0), matrix.dimensions)
 		}
 
 		@Test
@@ -626,9 +626,9 @@ class MatrixOfTests {
 		val matrix = matrixOf(*arrayOf<List<Int>>())
 
 		@Test
-		@DisplayName("returns a size zero matrix")
+		@DisplayName("returns a dimensions zero matrix")
 		fun testForSizeZero() {
-			assertEquals(Size(0, 0), matrix.size)
+			assertEquals(Dimensions(0, 0), matrix.dimensions)
 		}
 
 		@Test
@@ -644,9 +644,9 @@ class MatrixOfTests {
 		val matrix = matrixOf<Int>(listOf(), listOf())
 
 		@Test
-		@DisplayName("returns a size zero matrix")
+		@DisplayName("returns a dimensions zero matrix")
 		fun testForSizeZero() {
-			assertEquals(Size(2, 0), matrix.size)
+			assertEquals(Dimensions(2, 0), matrix.dimensions)
 		}
 
 		@Test
@@ -657,14 +657,14 @@ class MatrixOfTests {
 	}
 
 	@Nested
-	@DisplayName("On making a matrix with correctly formatted rows")
+	@DisplayName("On making a matrix with correctly formatted height")
 	class CorrectMatrixOfTest {
 		val matrix = matrixOf(listOf(1, 2, 3), listOf(4, 5, 6))
 
 		@Test
-		@DisplayName("Test size")
+		@DisplayName("Test dimensions")
 		fun testSize() {
-			assertEquals(Size(2, 3), matrix.size)
+			assertEquals(Dimensions(2, 3), matrix.dimensions)
 		}
 
 		@Test
@@ -682,7 +682,7 @@ class MatrixOfTests {
 	}
 
 	@Nested
-	@DisplayName("On making a matrix with rows of mismatched lengths")
+	@DisplayName("On making a matrix with height of mismatched lengths")
 	class MismatchedMatrixofTest {
 		@Test
 		@DisplayName("It should throw an IOB exception")

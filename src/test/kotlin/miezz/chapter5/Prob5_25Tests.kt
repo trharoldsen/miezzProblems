@@ -81,22 +81,22 @@ interface Prob5_25Tests {
 		val numMatrices = 500
 		val numSearches = 10
 		val distribution = mapOf(0 to 20, 2 to 30, 4 to 30, 6 to 10, 8 to 10)
-		val nextSize = fun Random.(): Size {
-			return Size(nextPoisson(2.5) * 4 + nextInt(4),
+		val nextSize = fun Random.(): Dimensions {
+			return Dimensions(nextPoisson(2.5) * 4 + nextInt(4),
 				nextPoisson(2.5) * 4 + nextInt(4))
 		}
 
 		return (1..numMatrices).asSequence()
 			.map { Random(it.toLong()) }
 			.map(::Problem5_25Builder)
-			.onEach { it.size = it.random.nextSize() }
+			.onEach { it.dimensions = it.random.nextSize() }
 			.onEach { it.makeMatrix(distribution) }
 			.flatMap { p -> (1..numSearches).asSequence().map { p } }
 			.onEach {
 				it.value = with(it.matrix!!) {
 					this[it.random.nextIndex(this)]
 				}
-			}.map { DynamicTest.dynamicTest("RandomExists (${it.size!!})") {
+			}.map { DynamicTest.dynamicTest("RandomExists (${it.dimensions!!})") {
 				assertTrue(searcher.find(it.value!!, it.matrix!!))
 			} }.asStream()
 	}
@@ -105,22 +105,22 @@ interface Prob5_25Tests {
 		val numMatrices = 500
 		val numSearches = 10
 		val distribution = mapOf(0 to 20, 2 to 30, 4 to 30, 6 to 10, 8 to 10)
-		val nextSize = fun Random.(): Size {
-			return Size(nextPoisson(2.5) * 4 + nextInt(4),
+		val nextSize = fun Random.(): Dimensions {
+			return Dimensions(nextPoisson(2.5) * 4 + nextInt(4),
 				nextPoisson(2.5) * 4 + nextInt(4))
 		}
 
 		return (1..numMatrices).asSequence()
 			.map { Random(it.toLong()) }
 			.map(::Problem5_25Builder)
-			.onEach { it.size = it.random.nextSize() }
+			.onEach { it.dimensions = it.random.nextSize() }
 			.onEach { it.makeMatrix(distribution) }
 			.flatMap { p -> (1..numSearches).asSequence().map { p } }
 			.onEach {
 				it.value = with(it.matrix!!) {
 					this[it.random.nextIndex(this)] + 1
 				}
-			}.map { DynamicTest.dynamicTest("RandomExists (${it.size!!})") {
+			}.map { DynamicTest.dynamicTest("RandomExists (${it.dimensions!!})") {
 				assertFalse(searcher.find(it.value!!, it.matrix!!))
 			} }.asStream()
 	}
@@ -130,19 +130,19 @@ interface Prob5_25Tests {
 		val numMatrices = 500
 		val numSearches = 10
 		val distribution = mapOf(0 to 20, 1 to 25, 2 to 30, 3 to 15, 4 to 10)
-		val nextSize = fun Random.(): Size {
-			return Size(nextPoisson(2.5) * 4 + nextInt(4),
+		val nextSize = fun Random.(): Dimensions {
+			return Dimensions(nextPoisson(2.5) * 4 + nextInt(4),
 				nextPoisson(2.5) * 4 + nextInt(4))
 		}
 
 		return (1..numMatrices).asSequence()
 			.map { Random(it.toLong()) }
 			.map(::Problem5_25Builder)
-			.onEach { it.size = it.random.nextSize() }
+			.onEach { it.dimensions = it.random.nextSize() }
 			.onEach { it.makeMatrix(distribution) }
 			.flatMap { p -> (1..numSearches).asSequence().map { p } }
 			.onEach { it.value = it.random.nextInt(it.maxValue!! + 1) }
-			.map { DynamicTest.dynamicTest("RandomExists (${it.size!!})") {
+			.map { DynamicTest.dynamicTest("RandomExists (${it.dimensions!!})") {
 				val expected = gold.find(it.value!!, it.matrix!!)
 				val actual = searcher.find(it.value!!, it.matrix!!)
 				assertEquals(expected, actual)
@@ -151,12 +151,12 @@ interface Prob5_25Tests {
 }
 
 private class Problem5_25Builder(val random: Random) {
-	var size: Size? = null
+	var dimensions: Dimensions? = null
 	var matrix: Matrix<Int>? = null
 	var value: Int? = null
 
 	fun makeMatrix(distribution: Map<Int, Int>) {
-		matrix = makeProb25Matrix(size!!, distribution, random)
+		matrix = makeProb25Matrix(dimensions!!, distribution, random)
 	}
 
 	val maxValue: Int?
@@ -171,8 +171,8 @@ private class Problem5_25Builder(val random: Random) {
 }
 
 private fun <T> Random.nextIndex(matrix: Matrix<T>): Index {
-	val row = nextInt(matrix.size.rows)
-	val col = nextInt(matrix.size.columns)
+	val row = nextInt(matrix.dimensions.height)
+	val col = nextInt(matrix.dimensions.width)
 	return Index(row, col)
 }
 

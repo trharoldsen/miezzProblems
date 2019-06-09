@@ -16,15 +16,15 @@ open class Benchmarks5_25Kt {
 	fun setupIteration() {
 		val distribution = mapOf(0 to 20, 1 to 20, 2 to 20, 3 to 15,
 			4 to 10, 6 to 5, 7 to 5, 8 to 5)
-		val nextSize = fun Random.(i: Int): Size {
-			return Size(nextPoisson(2 * i.toDouble()), nextPoisson(2 * i.toDouble()))
+		val nextSize = fun Random.(i: Int): Dimensions {
+			return Dimensions(nextPoisson(2 * i.toDouble()), nextPoisson(2 * i.toDouble()))
 		}
 
 		inputs = generateSequence(1) { it + 1}
 			.map { Random(it.toLong()) }
 			.map(::Problem5_25Builder)
 			.withIndex()
-			.onEach { it.value.size = it.value.random.nextSize(it.index) }
+			.onEach { it.value.dimensions = it.value.random.nextSize(it.index) }
 			.onEach { it.value.makeMatrix(distribution) }
 			.filter { !it.value.matrix!!.isEmpty() }
 			.flatMap { p -> (1..numSearches).asSequence().map { p.value } }
@@ -78,12 +78,12 @@ open class Benchmarks5_25Kt {
 
 
 private class Problem5_25Builder(val random: Random) {
-	var size: Size? = null
+	var dimensions: Dimensions? = null
 	var matrix: Matrix<Int>? = null
 	var value: Int? = null
 
 	fun makeMatrix(distribution: Map<Int, Int>) {
-		matrix = makeProb25Matrix(size!!, distribution, random)
+		matrix = makeProb25Matrix(dimensions!!, distribution, random)
 	}
 
 	val maxValue: Int?
@@ -98,7 +98,7 @@ private class Problem5_25Builder(val random: Random) {
 }
 
 private fun <T> Random.nextIndex(matrix: Matrix<T>): Index {
-	val row = nextInt(matrix.size.rows)
-	val col = nextInt(matrix.size.columns)
+	val row = nextInt(matrix.dimensions.height)
+	val col = nextInt(matrix.dimensions.width)
 	return Index(row, col)
 }

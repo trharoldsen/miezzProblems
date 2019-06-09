@@ -1,7 +1,5 @@
 package miezz.chapter5
 
-import kotlin.coroutines.experimental.buildIterator
-
 class Prob5_28 {
 	fun find(): Quint? {
 		val toFive = buildToFives()
@@ -48,7 +46,7 @@ private data class QuintBuilder(
 	fun build(): Quint = Quint(a!!, b!!, c!!, d!!, e!!)
 }
 
-fun main(args: Array<String>) {
+fun main() {
 	readLine()
 	println("solution is: " + Prob5_28().find())
 }

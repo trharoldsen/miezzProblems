@@ -25,9 +25,9 @@ class NaiveIterator5_25 : MatrixValueSearch {
 
 class NaiveForLoops5_25 : MatrixValueSearch {
 	override fun find(value: Int, matrix: Matrix<Int>): Boolean {
-		val size = matrix.size
-		for (row in 0..size.rows-1) {
-			for (col in 0..size.columns-1) {
+		val size = matrix.dimensions
+		for (row in 0..size.height -1) {
+			for (col in 0..size.width -1) {
 				if (matrix[row, col] == value)
 					return true
 			}
@@ -93,11 +93,11 @@ class LinearSearchCount5_25 : MatrixValueSearch {
 }
 
 fun makeProb25Matrix(
-	size: Size,
+	dimensions: Dimensions,
 	distribution: Map<Int, Percentage>,
 	random: Random
 ): ArrayMatrix<Int> {
-	val matrix = ArrayMatrix(size, { -1 })
+	val matrix = ArrayMatrix(dimensions, { -1 })
 	val rectangle = matrix.rectangle
 	if (matrix.isEmpty())
 		return matrix
@@ -121,8 +121,8 @@ fun makeProb25Matrix(
 	}
 	val remainingRect = Rectangle(Index(1, 1), rectangle.bottomRight)
 	matrix.submatrix(remainingRect, true).let {
-		for (row in (0..it.size.rows-1)) {
-			for (col in (0..it.size.columns-1)) {
+		for (row in (0..it.dimensions.height -1)) {
+			for (col in (0..it.dimensions.width -1)) {
 				val maxAdjacent = maxOf(it[row-1, col], it[row, col-1])
 				it[row, col] = maxAdjacent + random.nextItemPercent(distribution)
 			}

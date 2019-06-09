@@ -1,7 +1,6 @@
 package miezz.chapter8
 
 import java.util.*
-import kotlin.coroutines.experimental.buildSequence
 
 interface SortingAlgorithm {
 	fun sort(input: IntArray) = sort(input, 0, input.size)
@@ -12,7 +11,7 @@ typealias ShellsortGapFactory = (Int) -> Sequence<Int>
 class ShellSort(private val gaps: ShellsortGapFactory): SortingAlgorithm {
 	override fun sort(input: IntArray, begin: Int, end: Int) {
 		for (gap in gaps(end - begin)) {
-			for (i in begin+gap..end-1) {
+			for (i in begin+gap until end) {
 				var j = i
 				val tmp = input[i]
 				while (j >= begin+gap && tmp < input[j-gap]) {
@@ -26,7 +25,7 @@ class ShellSort(private val gaps: ShellsortGapFactory): SortingAlgorithm {
 
 	companion object {
 		val ORIGINAL: ShellsortGapFactory = {
-			buildSequence {
+			sequence {
 				var gap = it / 2
 				while (gap > 0) {
 					yield(gap)
@@ -36,7 +35,7 @@ class ShellSort(private val gaps: ShellsortGapFactory): SortingAlgorithm {
 		}
 
 		val ODDS_ONLY: ShellsortGapFactory = {
-			buildSequence {
+			sequence {
 				var gap = it / 2
 				while (gap > 0) {
 					if (gap % 2 == 0)
@@ -48,7 +47,7 @@ class ShellSort(private val gaps: ShellsortGapFactory): SortingAlgorithm {
 		}
 
 		val GONNETS: ShellsortGapFactory = {
-			buildSequence {
+			sequence {
 				var updated = it / 2
 				while (updated > 0) {
 					val gap = if (updated == 2) 1 else updated
@@ -106,7 +105,7 @@ class ShellSort(private val gaps: ShellsortGapFactory): SortingAlgorithm {
 				nextPow2 *= 2
 			}
 
-			buildSequence<Int> {
+			sequence<Int> {
 				val f1Iter = form1.listIterator(form1.lastIndex + 1)
 				val f2Iter = form1.listIterator(form1.lastIndex + 1)
 

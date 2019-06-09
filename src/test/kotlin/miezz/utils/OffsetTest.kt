@@ -38,20 +38,6 @@ internal class OffsetTest {
 		assertEquals(Offset(6, 12), offset * 3)
 	}
 
-	@DisplayName("Dividing returns scaled values")
-	@Test
-	fun div() {
-		val offset = Offset(2, 4)
-		assertEquals(Offset(1, 2), offset / 2)
-	}
-
-	@DisplayName("Dividing does int division")
-	@Test
-	fun div2() {
-		val offset = Offset(5, 3)
-		assertEquals(Offset(2, 1), offset / 2)
-	}
-
 	@DisplayName("Test Equals")
 	@Test
 	fun equals() {

@@ -34,11 +34,11 @@ internal class RectangleTest {
 		)
 	}
 
-	@DisplayName("Size should be (left-right)x(top-bottom)")
+	@DisplayName("Dimensions should be (left-right)x(top-bottom)")
 	@Test
 	fun testSize() {
 		val rect = Rectangle(Index(1, 2), Index(7, 9))
-		assertEquals(Size(6, 7), rect.size)
+		assertEquals(Dimensions(6, 7), rect.dimensions)
 	}
 
 	@DisplayName("Rectangle should contains points inside")
